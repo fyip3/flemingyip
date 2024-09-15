@@ -1,6 +1,6 @@
-/* GENERAL */
+@import url("https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;600&display=swap");
 
-@import url("https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@300;400;500;600&display=swap");
+/* GENERAL */
 
 * {
     margin: 0;
@@ -8,7 +8,9 @@
 }
 
 body {
-    font-family: 'Source Code Pro', monospace; /* Setting Source Code Pro as the primary font */
+    font-family: 'Inconsolata', monospace; /* Blocky, code-style font */
+    background-color: #1a1e2b; /* Dark blue background */
+    color: #d4d7dd; /* Light grey text color */
 }
 
 html {
@@ -16,7 +18,24 @@ html {
 }
 
 p {
-    color: rgb(85, 85, 85);
+    color: #d4d7dd;
+}
+/* FLY-IN ANIMATION */
+.fly-in {
+    opacity: 0; /* Initially invisible */
+    transform: translateX(100px); /* Positioned off to the right */
+    transition: opacity 1s ease-out, transform 1s ease-out; /* Animation for flying in */
+}
+
+.fly-in-visible {
+    opacity: 1; /* Becomes visible */
+    transform: translateX(0); /* Moves back to original position */
+}
+#flappyBirdGame {
+    background-color: #70c5ce; /* Sky blue background */
+    display: block;
+    margin: 0 auto;
+    border: 2px solid #000; /* Black border */
 }
 
 /* TRANSITION */
@@ -46,20 +65,21 @@ nav {
 }
 
 a {
-    color: black;
+    color: #b0c8ed; /* Light blue for links */
     text-decoration: none;
     text-decoration-color: white;
 }
 
 a:hover {
-    color: grey;
+    color: #89a4c7; /* Slightly darker blue on hover */
     text-decoration: underline;
     text-underline-offset: 1rem;
-    text-decoration-color: rgb(181, 181, 181);
+    text-decoration-color: #b0c8ed;
 }
 
 .logo {
     font-size: 2rem;
+    color: #d4d7dd; /* Light grey for logo */
 }
 
 .logo:hover {
@@ -89,7 +109,7 @@ a:hover {
 .hamburger-icon span {
     width: 100%;
     height: 2px;
-    background-color: black;
+    background-color: #d4d7dd;
     transition: all 0.3 ease-in-out;
 }
 
@@ -174,8 +194,11 @@ section {
     height: 400px;
     width: 400px;
     margin: auto 0;
+    
 }
-
+.section__pic-container img {
+    border-radius: 25px; /* Rounded corners */
+}
 .section__text {
     align-self: center;
     text-align: center;
@@ -196,6 +219,7 @@ section {
 
 .title {
     font-size: 3rem;
+    color: #ffffff;
     text-align: center;
 }
 
@@ -211,6 +235,9 @@ section {
 .icon {
     cursor: pointer;
     height: 2rem;
+    
+    filter: invert(65%) sepia(45%) saturate(150%) hue-rotate(190deg) brightness(90%) contrast(95%);
+
 }
 
 /* BUTTONS */
@@ -231,30 +258,17 @@ section {
 
 .btn-color-1,
 .btn-color-2 {
-    border: rgb(53, 53, 53) 0.1rem solid;
+    border: rgb(216, 136, 136) 0.1rem solid;
+    background: none;
+    color: rgb(212, 121, 121);
 }
 
 .btn-color-1:hover,
 .btn-color-2:hover {
     cursor: pointer;
-}
-
-.btn-color-1,
-.btn-color-2:hover {
-    background: rgb(53, 53, 53);
-    color: white;
-}
-
-.btn-color-1:hover {
-    background: rgb(0, 0, 0);
-}
-
-.btn-color-2 {
-    background: none;
-}
-
-.btn-color-2:hover {
-    border: rgb(255, 255, 255) 0.1rem solid;
+    background: rgb(168, 97, 97);
+    color: rgb(240, 138, 138);
+    border: rgb(132, 97, 97) 0.1rem solid;
 }
 
 .btn-container {
@@ -285,6 +299,8 @@ section {
 
 .about-pic {
     border-radius: 2rem;
+    margin-left: 55px; /* Adjust the value to move the image to the right */
+    clip-path: inset(0 10% 0 0 round 2rem);
 }
 
 .arrow {
@@ -296,13 +312,16 @@ section {
 .details-container {
     padding: 1.5rem;
     flex: 1;
-    background: white;
+    background: rgb(255, 255, 255);
     border-radius: 2rem;
-    border: rgb(53, 53, 53) 0.1rem solid;
-    border-color: rgb(163, 163, 163);
+    border: rgb(87, 220, 20) 0.2rem solid;
+    border-color: rgb(47, 96, 182);
     text-align: center;
 }
-
+.details-container h3,
+.details-container p {
+    color: #2874a7; /* Set the desired text color */
+}
 .section-container {
     gap: 4rem;
     height: 80%;
@@ -321,7 +340,7 @@ section {
 }
 
 .experience-sub-title {
-    color: rgb(85, 85, 85);
+    color: rgb(24, 32, 146);
     font-weight: 600;
     font-size: 1.75rem;
     margin-bottom: 2rem;
@@ -360,7 +379,7 @@ article .icon {
 }
 
 .color-container {
-    border-color: rgb(163, 163, 163);
+    border-color: rgb(56, 74, 125);
     background: rgb(250, 250, 250);
 }
 
@@ -377,7 +396,7 @@ article .icon {
 
 .project-btn {
     color: black;
-    border-color: rgb(163, 163, 163);
+    border-color: rgb(115, 124, 165);
 }
 
 /* CONTACT */
@@ -411,6 +430,15 @@ article .icon {
 .contact-info-container p {
     font-size: larger;
 }
+.contact-info-container a {
+    color: #0a3fab; /* Set the desired text color */
+    text-decoration: none; /* Remove underline if needed */
+}
+
+.contact-info-container a:hover {
+    color: #7ca3df; /* Set a different color on hover */
+}
+
 
 .contact-icon {
     cursor: default;
