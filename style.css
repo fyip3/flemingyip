@@ -320,7 +320,9 @@ section {
 }
 .details-container h3,
 .details-container p {
-    color: #2874a7; /* Set the desired text color */
+    color: #2874a7; 
+    font-size: 18px; 
+    line-height: 1.6; 
 }
 .section-container {
     gap: 4rem;
