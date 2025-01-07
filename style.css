@@ -23,19 +23,21 @@ body::before {
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(45deg, #1a1e2b 25%, #232838 25%, #232838 50%, #1a1e2b 50%, #1a1e2b 75%, #232838 75%, #232838);
-    background-size: 60px 60px;
-    animation: moveBackground 4s linear infinite;
-    opacity: 0.4;
+    background: linear-gradient(45deg, #1a1e2b, #2c3e50, #34495e, #2c3e50);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
     z-index: -1;
 }
 
-@keyframes moveBackground {
+@keyframes gradientBG {
     0% {
-        background-position: 0 0;
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
     }
     100% {
-        background-position: 60px 60px;
+        background-position: 0% 50%;
     }
 }
 
@@ -404,8 +406,10 @@ a:hover {
 
 .about-pic {
     border-radius: 2rem;
-    margin-left: 55px; /* Adjust the value to move the image to the right */
+    margin-left: 55px;
     clip-path: inset(0 10% 0 0 round 2rem);
+    width: 300px;
+    height: auto;
 }
 
 .arrow {
@@ -417,15 +421,14 @@ a:hover {
 .details-container {
     padding: 1.5rem;
     flex: 1;
-    background: rgb(255, 255, 255);
+    background: rgba(41, 50, 70, 0.5);
     border-radius: 2rem;
-    border: rgb(87, 220, 20) 0.2rem solid;
-    border-color: rgb(47, 96, 182);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     text-align: center;
 }
 .details-container h3,
 .details-container p {
-    color: #2874a7; /* Set the desired text color */
+    color: #d4d7dd;
 }
 .section-container {
     gap: 4rem;
@@ -525,9 +528,8 @@ article .icon {
     display: flex;
     justify-content: center;
     border-radius: 2rem;
-    border: rgb(53, 53, 53) 0.1rem solid;
-    border-color: rgb(163, 163, 163);
-    background: rgb(250, 250, 250);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(41, 50, 70, 0.5);
     margin: 2rem auto;
     padding: 0.5rem;
 }
@@ -641,4 +643,13 @@ footer p {
 .fas.fa-check-circle {
     background: transparent;
     color: #3498db; /* Match with other blue elements */
+}
+
+/* Update the text colors for better visibility */
+.contact-info-container p a {
+    color: #d4d7dd; /* Light gray text */
+}
+
+.contact-info-container a:hover {
+    color: #3498db; /* Blue on hover */
 }
