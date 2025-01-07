@@ -507,10 +507,18 @@ article .icon {
 /* CONTACT */
 
 #contact {
+    padding: 2rem;
+    margin: 2rem auto;
+    max-width: 800px; /* Limit the width */
+    min-height: auto; /* Remove fixed height if any */
+}
+
+.contact-content {
     display: flex;
-    justify-content: center;
     flex-direction: column;
-    height: 70vh;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1rem 0; /* Reduce vertical padding */
 }
 
 .contact-info-upper-container {
@@ -562,4 +570,75 @@ footer {
 
 footer p {
     text-align: center;
+}
+
+/* Adjust media queries for smaller screens */
+@media screen and (max-width: 1200px) {
+    #contact {
+        margin: 2rem 5%;
+        padding: 1.5rem;
+    }
+}
+
+/* Update the profile image container */
+.about-image {
+    width: 200px; /* Reduced from original size */
+    height: auto;
+    border-radius: 15px;
+}
+
+/* Update the white boxes to have a more fitting background */
+.details-container, 
+.info-card,
+.skills-card {
+    background: rgba(41, 50, 70, 0.5); /* Darker, semi-transparent blue */
+    border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle border */
+    backdrop-filter: blur(10px);
+    border-radius: 10px;
+    padding: 1.5rem;
+}
+
+/* If you have any specific white backgrounds, this will target them */
+.white-bg,
+[class*="container"] > div {
+    background: rgba(41, 50, 70, 0.5);
+}
+
+/* Update text color if needed for better contrast */
+.details-container p,
+.info-card p,
+.skills-card p {
+    color: #d4d7dd;
+}
+
+/* Update the experience section containers */
+.details-container, 
+.skills-container > div {
+    background: rgba(41, 50, 70, 0.5); /* Darker, semi-transparent blue */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 10px;
+}
+
+/* Specific styling for Languages and Tools sections */
+#experience .details-container {
+    background: rgba(41, 50, 70, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Update the titles to ensure they're visible */
+.Languages, .Tools {
+    color: #3498db; /* Keep the blue color for titles */
+}
+
+/* Ensure text remains visible */
+.details-container p,
+.experience-sub-title {
+    color: #d4d7dd;
+}
+
+/* Update checkmark backgrounds if needed */
+.fas.fa-check-circle {
+    background: transparent;
+    color: #3498db; /* Match with other blue elements */
 }
