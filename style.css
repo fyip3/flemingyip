@@ -23,21 +23,26 @@ body::before {
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(45deg, #1a1e2b, #2c3e50, #34495e, #2c3e50);
-    background-size: 400% 400%;
-    animation: gradientBG 15s ease infinite;
+    background: linear-gradient(45deg, 
+        #0a192f,      /* Darker navy blue */
+        #1a365d,      /* Deep blue */
+        #2d3748,      /* Slate gray */
+        #1a1e2b       /* Back to dark */
+    );
+    background-size: 300% 300%;  /* Made smaller for more dramatic movement */
+    animation: gradientBG 12s ease-in-out infinite alternate;  /* Changed timing */
     z-index: -1;
 }
 
 @keyframes gradientBG {
     0% {
-        background-position: 0% 50%;
+        background-position: 0% 0%;
     }
     50% {
-        background-position: 100% 50%;
+        background-position: 100% 100%;
     }
     100% {
-        background-position: 0% 50%;
+        background-position: 0% 0%;
     }
 }
 
@@ -652,4 +657,26 @@ footer p {
 
 .contact-info-container a:hover {
     color: #3498db; /* Blue on hover */
+}
+
+/* Remove any background from the main section containers */
+.section-container,
+.about-details-container,
+.about-containers {
+    background: transparent;
+    backdrop-filter: none;
+}
+
+/* Only style the specific details containers that hold the experience/education info */
+.about-containers .details-container {
+    background: rgba(41, 50, 70, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 2rem;
+    padding: 1.5rem;
+}
+
+/* Ensure the section background is transparent */
+#about {
+    background: transparent;
 }
