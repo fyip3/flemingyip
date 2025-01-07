@@ -36,7 +36,7 @@
         </div>
     </div>
 </nav>
-<section id="profile">
+<section id="profile" class="fly-in">
     <div class="section__pic-container">
         <img src="assets/profile-pic.png" alt="Fleming Yip profile picture" />
     </div>
@@ -70,7 +70,7 @@
         </div>
     </div>
 </section>
-<section id="about">
+<section id="about" class="fly-in">
     <p class="section__text__p1">Get To Know More</p>
     <h1 class="title">About Me</h1>
     <div class="section-container">
@@ -118,13 +118,13 @@
             onclick="location.href='./#experience'"
     />
 </section>
-<section id="experience">
+<section id="experience" class="fly-in">
     <p class="section__text__p1">Explore My</p>
     <h1 class="title">Experience</h1>
     <div class="experience-details-container">
         <div class="about-containers">
             <div class="details-container">
-                <h2 class="experience-sub-title">Frontend Development</h2>
+                <h2 class="experience-sub-title">Languages</h2>
                 <div class="article-container">
                     <article>
                         <img
@@ -166,8 +166,8 @@
                                 class="icon"
                         />
                         <div>
-                            <h3>Git</h3>
-                            <p>Experienced</p>
+                            <h3>R</h3>
+                            <p>Intermediate</p>
                         </div>
                     </article>
                     <article>
@@ -176,6 +176,7 @@
                                 alt="Experience icon"
                                 class="icon"
                         />
+                        
                         <div>
                             <h3>HTML/CSS</h3>
                             <p>Intermediate</p>
@@ -195,7 +196,7 @@
                 </div>
             </div>
             <div class="details-container">
-                <h2 class="experience-sub-title">Frontend Development</h2>
+                <h2 class="experience-sub-title">Tools</h2>
                 <div class="article-container">
                     <article>
                         <img
@@ -204,40 +205,62 @@
                                 class="icon"
                         />
                         <div>
-                            <h3>PostgreSQL</h3>
-                            <p>Basic</p>
-                        </div>
-                    </article>
-                    <article>
-                        <img
-                                src="assets/checkmark.png"
-                                alt="Experience icon"
-                                class="icon"
-                        />
-                        <div>
-                            <h3>Node JS</h3>
-                            <p>Intermediate</p>
-                        </div>
-                    </article>
-                    <article>
-                        <img
-                                src="assets/checkmark.png"
-                                alt="Experience icon"
-                                class="icon"
-                        />
-                        <div>
-                            <h3>Express JS</h3>
-                            <p>Intermediate</p>
-                        </div>
-                    </article>
-                    <article>
-                        <img
-                                src="assets/checkmark.png"
-                                alt="Experience icon"
-                                class="icon"
-                        />
-                        <div>
                             <h3>Git</h3>
+                            <p>Experienced</p>
+                        </div>
+                    </article>
+                    <article>
+                        <img
+                                src="assets/checkmark.png"
+                                alt="Experience icon"
+                                class="icon"
+                        />
+                        <div>
+                            <h3>Android Studio</h3>
+                            <p>Experienced</p>
+                        </div>
+                    </article>
+                    <article>
+                        <img
+                                src="assets/checkmark.png"
+                                alt="Experience icon"
+                                class="icon"
+                        />
+                        <div>
+                            <h3>Jupyter Notebook</h3>
+                            <p>Experienced</p>
+                        </div>
+                    </article>
+                    <article>
+                        <img
+                                src="assets/checkmark.png"
+                                alt="Experience icon"
+                                class="icon"
+                        />
+                        <div>
+                            <h3>Pandas</h3>
+                            <p>Intermediate</p>
+                        </div>
+                    </article>
+                    <article>
+                        <img
+                                src="assets/checkmark.png"
+                                alt="Experience icon"
+                                class="icon"
+                        />
+                        <div>
+                            <h3>numPy</h3>
+                            <p>Intermediate</p>
+                        </div>
+                    </article>
+                    <article>
+                        <img
+                                src="assets/checkmark.png"
+                                alt="Experience icon"
+                                class="icon"
+                        />
+                        <div>
+                            <h3>Matplotlib</h3>
                             <p>Intermediate</p>
                         </div>
                     </article>
@@ -251,8 +274,16 @@
             class="icon arrow"
             onclick="location.href='./#projects'"
     />
+
 </section>
-<section id="projects">
+    <section id="game" class="fly-in-bottom">
+        <h1 class="title"></h1>
+        <canvas id="flappyBirdGame" width="900" height="620"></canvas>
+       
+    </section>
+    <!--
+</section>
+<section id="projects" class="fly-in">
     <p class="section__text__p1">Browse My Recent</p>
     <h1 class="title">Projects</h1>
     <div class="experience-details-container">
@@ -331,14 +362,16 @@
             </div>
         </div>
     </div>
+
     <img
             src="assets/arrow.png"
             alt="Arrow icon"
             class="icon arrow"
             onclick="location.href='./#contact'"
     />
+-->
 </section>
-<section id="contact">
+<section id="contact" class="fly-in">
     <p class="section__text__p1">Get in Touch</p>
     <h1 class="title">Contact Me</h1>
     <div class="contact-info-upper-container">
@@ -374,5 +407,6 @@
     <p>Copyright &#169; 2023 Fleming Yip. All Rights Reserved.</p>
 </footer>
 <script src="script.js"></script>
+<script src="particles.js"></script>
 </body>
 </html>

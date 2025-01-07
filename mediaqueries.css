@@ -35,7 +35,7 @@
         height: fit-content;
     }
     section {
-        margin: 0 5%;
+        margin: 2rem 5%;
     }
     .section__pic-container {
         width: 275px;
@@ -44,6 +44,24 @@
     }
     .about-containers {
         margin-top: 0;
+    }
+    .btn {
+        padding: 0.8rem 1.8rem;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    body::before {
+        background-size: 30px 30px;
+    }
+    
+    section {
+        margin: 1rem 2%;
+        padding: 1rem;
+    }
+    
+    .backdrop-filter {
+        backdrop-filter: none;
     }
 }
 
