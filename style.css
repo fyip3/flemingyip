@@ -24,13 +24,13 @@ body::before {
     width: 100%;
     height: 100%;
     background: linear-gradient(45deg, 
-        #0a192f,      /* Darker navy blue */
-        #1a365d,      /* Deep blue */
-        #2d3748,      /* Slate gray */
-        #1a1e2b       /* Back to dark */
+        #000000,      /* Deep navy */
+        #16105d,      /* Bright blue */
+        #041d3d,      /* Medium blue */
+        #000000       /* Back to deep navy */
     );
-    background-size: 300% 300%;  /* Made smaller for more dramatic movement */
-    animation: gradientBG 12s ease-in-out infinite alternate;  /* Changed timing */
+    background-size: 400% 400%;  /* Increased for more dramatic movement */
+    animation: gradientBG 8s ease-in-out infinite alternate;  /* Faster animation */
     z-index: -1;
 }
 
@@ -59,35 +59,121 @@ body::before {
 
 .particle {
     position: absolute;
-    width: 2px;
-    height: 2px;
-    background: rgba(176, 200, 237, 0.5);
+    width: 3px;
+    height: 3px;
+    background: rgba(176, 200, 237, 0.8);
     border-radius: 50%;
+    box-shadow: 0 0 4px #b0c8ed;
     animation: float linear infinite;
 }
 
 @keyframes float {
     0% {
-        transform: translateY(100vh);
+        transform: translateY(100vh) scale(0.3);
         opacity: 0;
     }
-    50% {
+    20% {
+        opacity: 1;
+    }
+    90% {
         opacity: 1;
     }
     100% {
-        transform: translateY(-100px);
+        transform: translateY(-100px) scale(1);
         opacity: 0;
     }
 }
 
 /* Enhanced Sections */
 section {
-    background: rgba(26, 30, 43, 0.7);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    box-shadow: 0 0 20px rgba(176, 200, 237, 0.1);
+    background: rgba(26, 30, 43, 0.4);
+    backdrop-filter: blur(8px);
+    border-radius: 8px;
     margin: 2rem 10rem;
     padding: 2rem;
+    position: relative;
+    border: 1px solid rgba(64, 169, 255, 0.15);
+    box-shadow: 
+        0 0 15px rgba(64, 169, 255, 0.08),
+        inset 0 0 20px rgba(64, 169, 255, 0.03);
+    overflow: hidden;
+}
+
+section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(64, 169, 255, 0.6),
+        transparent
+    );
+    animation: scanline 2s linear infinite;
+}
+
+section::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(64, 169, 255, 0.6),
+        transparent
+    );
+    animation: scanline 2s linear infinite reverse;
+}
+
+/* Corner accents */
+.section-corner {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    border: 2px solid rgba(64, 169, 255, 0.8);
+    pointer-events: none;
+}
+
+section > *:first-child::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    border-top: 2px solid rgba(64, 169, 255, 0.6);
+    border-left: 2px solid rgba(64, 169, 255, 0.6);
+    width: 15px;
+    height: 15px;
+}
+
+section > *:first-child::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    border-top: 2px solid rgba(64, 169, 255, 0.6);
+    border-right: 2px solid rgba(64, 169, 255, 0.6);
+    width: 15px;
+    height: 15px;
+}
+
+@keyframes scanline {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* Optional: Add subtle hover effect */
+section:hover {
+    box-shadow: 0 0 50px rgba(41, 128, 185, 0.2);
 }
 
 /* Enhanced Buttons */
@@ -130,6 +216,8 @@ section {
 
 /* Enhanced Titles */
 .title {
+    text-align: center;
+    margin-bottom: 2rem;
     background: linear-gradient(45deg, #3498db, #2ecc71);
     -webkit-background-clip: text;
     background-clip: text;
@@ -411,10 +499,10 @@ a:hover {
 
 .about-pic {
     border-radius: 2rem;
-    margin-left: 55px;
+    margin: auto 0 auto 55px;
     clip-path: inset(0 10% 0 0 round 2rem);
-    width: 300px;
-    height: auto;
+    width: 250px;
+    height: 250px;
 }
 
 .arrow {
@@ -453,7 +541,7 @@ a:hover {
 }
 
 .experience-sub-title {
-    color: rgb(24, 32, 146);
+    color: rgb(55, 64, 193);
     font-weight: 600;
     font-size: 1.75rem;
     margin-bottom: 2rem;
@@ -485,32 +573,6 @@ article .icon {
     cursor: default;
 }
 
-/* PROJECTS SECTION */
-
-#projects {
-    position: relative;
-}
-
-.color-container {
-    border-color: rgb(56, 74, 125);
-    background: rgb(250, 250, 250);
-}
-
-.project-img {
-    border-radius: 2rem;
-    width: 90%;
-    height: 90%;
-}
-
-.project-title {
-    margin: 1rem;
-    color: black;
-}
-
-.project-btn {
-    color: black;
-    border-color: rgb(115, 124, 165);
-}
 
 /* CONTACT */
 
@@ -551,12 +613,12 @@ article .icon {
     font-size: larger;
 }
 .contact-info-container a {
-    color: #0a3fab; /* Set the desired text color */
-    text-decoration: none; /* Remove underline if needed */
+    color: #3498db; /* Bright blue */
+    text-decoration: none;
 }
 
 .contact-info-container a:hover {
-    color: #7ca3df; /* Set a different color on hover */
+    color: #5dade2; /* Lighter blue on hover */
 }
 
 
@@ -587,96 +649,41 @@ footer p {
     }
 }
 
-/* Update the profile image container */
-.about-image {
-    width: 200px; /* Reduced from original size */
-    height: auto;
-    border-radius: 15px;
-}
-
-/* Update the white boxes to have a more fitting background */
-.details-container, 
-.info-card,
-.skills-card {
-    background: rgba(41, 50, 70, 0.5); /* Darker, semi-transparent blue */
-    border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle border */
-    backdrop-filter: blur(10px);
-    border-radius: 10px;
-    padding: 1.5rem;
-}
-
-/* If you have any specific white backgrounds, this will target them */
-.white-bg,
-[class*="container"] > div {
-    background: rgba(41, 50, 70, 0.5);
-}
-
-/* Update text color if needed for better contrast */
-.details-container p,
-.info-card p,
-.skills-card p {
-    color: #d4d7dd;
-}
-
-/* Update the experience section containers */
-.details-container, 
-.skills-container > div {
-    background: rgba(41, 50, 70, 0.5); /* Darker, semi-transparent blue */
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border-radius: 10px;
-}
-
-/* Specific styling for Languages and Tools sections */
-#experience .details-container {
-    background: rgba(41, 50, 70, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Update the titles to ensure they're visible */
-.Languages, .Tools {
-    color: #3498db; /* Keep the blue color for titles */
-}
-
-/* Ensure text remains visible */
-.details-container p,
-.experience-sub-title {
-    color: #d4d7dd;
-}
-
-/* Update checkmark backgrounds if needed */
-.fas.fa-check-circle {
+/* Remove the default section styling for the game section */
+#game {
     background: transparent;
-    color: #3498db; /* Match with other blue elements */
-}
-
-/* Update the text colors for better visibility */
-.contact-info-container p a {
-    color: #d4d7dd; /* Light gray text */
-}
-
-.contact-info-container a:hover {
-    color: #3498db; /* Blue on hover */
-}
-
-/* Remove any background from the main section containers */
-.section-container,
-.about-details-container,
-.about-containers {
-    background: transparent;
+    box-shadow: none;
     backdrop-filter: none;
+    border: none;
+    padding: 0;
+    margin: 2rem auto;  /* Keep some vertical spacing */
+    display: flex;
+    justify-content: center;
 }
 
-/* Only style the specific details containers that hold the experience/education info */
-.about-containers .details-container {
-    background: rgba(41, 50, 70, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border-radius: 2rem;
-    padding: 1.5rem;
+/* Center the canvas */
+#flappyBirdGame {
+    display: block;
+    margin: 0 auto;
 }
 
-/* Ensure the section background is transparent */
-#about {
-    background: transparent;
+.astronaut {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background: url('assets/astronaut.png') no-repeat center center;
+    background-size: contain;
+    transition: all 0.5s ease;
+    animation: spin 8s linear infinite;
 }
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+#game::before,
+#game::after {
+    display: none;
+}
+

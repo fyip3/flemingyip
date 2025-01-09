@@ -41,13 +41,60 @@ let frame = 0;
 let score = 0;
 let gameOver = false;
 let gameStarted = false;
+let particles = [];
 
+// Particle class remains the same
+class Particle {
+    constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.size = Math.random() * 2;
+        this.speed = Math.random() * 0.5;
+        this.opacity = Math.random() * 0.5;
+    }
+
+    update() {
+        this.y -= this.speed;
+        if (this.y < 0) {
+            this.y = canvas.height;
+            this.x = Math.random() * canvas.width;
+        }
+    }
+
+    draw() {
+        ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+// Initialize particles
+function initParticles() {
+    particles = [];
+    for(let i = 0; i < 50; i++) {
+        particles.push(new Particle());
+    }
+}
 
 // Display "Press Space to Start" message
 function displayStartMessage() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);  // Clear the canvas
-    ctx.fillStyle = "black";
-    ctx.font = "30px Arial";
+    // Draw background with gradient
+    let gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, '#0a192f');
+    gradient.addColorStop(0.5, '#1a365d');
+    gradient.addColorStop(1, '#2a4c7c');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw particles
+    particles.forEach(particle => {
+        particle.update();
+        particle.draw();
+    });
+
+    ctx.fillStyle = "#d4d7dd";
+    ctx.font = "30px Inconsolata";
     ctx.textAlign = "center";
     ctx.fillText("Press Space", canvas.width / 2, canvas.height / 2);
 }
@@ -72,24 +119,71 @@ document.addEventListener("keydown", function (event) {
 const MIN_PIPE_GAP = 110; // Set the minimum gap to 80 pixels
 // Pipe constructor
 function Pipe() {
-    const maxPipeHeight = canvas.height - MIN_PIPE_GAP; // Max height a pipe can have, considering the minimum gap
+    const maxPipeHeight = canvas.height - MIN_PIPE_GAP;
     this.top = Math.random() * (canvas.height / 2);
     this.bottom = Math.random() * (canvas.height / 2);
     this.x = canvas.width;
-    this.width = 30; // Adjust pipe width for bigger canvas
-    this.speed = 5;  // Increase pipe speed slightly for more challenge
-    const pipeGap = canvas.height - this.top - this.bottom; 
+    this.width = 50;  // Slightly wider pipes
+    this.speed = 5;
+    
+    // Ensure minimum gap
+    const pipeGap = canvas.height - this.top - this.bottom;
     if (pipeGap < MIN_PIPE_GAP) {
-        this.bottom = canvas.height - this.top - MIN_PIPE_GAP; // Adjust the bottom pipe to ensure the gap is at least 80
+        this.bottom = canvas.height - this.top - MIN_PIPE_GAP;
     }
 
-    this.draw = function () {
-        ctx.fillStyle = "#228B22"; // Green pipes
-        ctx.fillRect(this.x, 0, this.width, this.top); // Top pipe
-        ctx.fillRect(this.x, canvas.height - this.bottom, this.width, this.bottom); // Bottom pipe
+    this.draw = function() {
+        // Create gradient for pipes
+        let pipeGradient = ctx.createLinearGradient(this.x, 0, this.x + this.width, 0);
+        pipeGradient.addColorStop(0, '#1a365d');    // Darker edge
+        pipeGradient.addColorStop(0.5, '#2a4c7c');  // Lighter middle
+        pipeGradient.addColorStop(1, '#1a365d');    // Darker edge
+        
+        ctx.fillStyle = pipeGradient;
+        
+        // Draw top pipe with rounded corners at bottom
+        ctx.beginPath();
+        ctx.moveTo(this.x, 0);
+        ctx.lineTo(this.x + this.width, 0);
+        ctx.lineTo(this.x + this.width, this.top - 10);
+        ctx.quadraticCurveTo(this.x + this.width, this.top, this.x + this.width - 10, this.top);
+        ctx.lineTo(this.x + 10, this.top);
+        ctx.quadraticCurveTo(this.x, this.top, this.x, this.top - 10);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Add highlight effect
+        let highlightGradient = ctx.createLinearGradient(this.x, 0, this.x + 5, 0);
+        highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.1)');
+        highlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        ctx.fillStyle = highlightGradient;
+        ctx.fillRect(this.x, 0, 5, this.top);
+        
+        // Draw bottom pipe with rounded corners at top
+        ctx.fillStyle = pipeGradient;
+        ctx.beginPath();
+        ctx.moveTo(this.x, canvas.height);
+        ctx.lineTo(this.x + this.width, canvas.height);
+        ctx.lineTo(this.x + this.width, canvas.height - this.bottom + 10);
+        ctx.quadraticCurveTo(this.x + this.width, canvas.height - this.bottom, 
+                            this.x + this.width - 10, canvas.height - this.bottom);
+        ctx.lineTo(this.x + 10, canvas.height - this.bottom);
+        ctx.quadraticCurveTo(this.x, canvas.height - this.bottom, 
+                            this.x, canvas.height - this.bottom + 10);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Add highlight to bottom pipe
+        ctx.fillStyle = highlightGradient;
+        ctx.fillRect(this.x, canvas.height - this.bottom, 5, this.bottom);
+        
+        // Optional: Add subtle border
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
     };
 
-    this.update = function () {
+    this.update = function() {
         this.x -= this.speed;
         this.draw();
     };
@@ -129,7 +223,21 @@ function checkCollision(pipe) {
 
 // Main game loop
 function gameLoop() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw background with gradient
+    let gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, '#0a192f');
+    gradient.addColorStop(0.5, '#1a365d');
+    gradient.addColorStop(1, '#2a4c7c');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw and update particles
+    particles.forEach(particle => {
+        particle.update();
+        particle.draw();
+    });
 
     // Draw and update pipes
     if (frame % 100 === 0) {
@@ -149,7 +257,7 @@ function gameLoop() {
     updateBird();
 
     // Display score
-    ctx.fillStyle = "black";
+    ctx.fillStyle = "white";
     ctx.font = "16px Arial";
     ctx.fillText("Score: " + score, 40, 20);
 
@@ -161,12 +269,13 @@ function gameLoop() {
     frame++;
 
     if (!gameOver) {
-        requestAnimationFrame(gameLoop); // Keep the game going
+        requestAnimationFrame(gameLoop);
     } else {
-        ctx.fillStyle = "red";
-        ctx.font = "30px Arial";
-        ctx.fillText("Game Over", canvas.width / 2 - 80, canvas.height / 2);
-        ctx.font = "20px Arial";
+        ctx.fillStyle = "white";
+        ctx.font = "30px Inconsolata";
+        ctx.textAlign = "center";
+        ctx.fillText("Game Over", canvas.width / 2, canvas.height / 2);
+        ctx.font = "20px Inconsolata";
         ctx.fillText("Press Space to Restart", canvas.width / 2, canvas.height / 2 + 40);
     }
 }
@@ -174,14 +283,17 @@ function gameLoop() {
 // Start the game
 function startGame() {
     if (!gameStarted) {
-        gameStarted = true;  // Set the game as started
+        gameStarted = true;
         gameOver = false;
-        pipes = [];  // Clear existing pipes
-        score = 0;  // Reset score
-        frame = 0;  // Reset frame counter
-        bird.y = 150;  // Reset bird position
-        bird.velocity = 0;  // Reset bird velocity
-        gameLoop();  // Start the game loop
+        pipes = [];
+        score = 0;
+        frame = 0;
+        bird.y = 150;
+        bird.velocity = 0;
+        if (particles.length === 0) {
+            initParticles();
+        }
+        gameLoop();
     }
 }
 
@@ -197,8 +309,52 @@ function resetGame() {
     gameLoop();  // Restart the game loop
 }
 
-// Initial display of "Press Space to Start"
+// Initialize particles when the game loads
+initParticles();
 displayStartMessage();
 
+
+    // Create astronaut
+    const astronaut = document.createElement('div');
+    astronaut.className = 'astronaut';
+    document.body.appendChild(astronaut);
     
+    // Initial position
+    let posX = window.innerWidth / 2;
+    let posY = window.innerHeight / 2;
+    let velX = 1;  // Initial horizontal drift
+    let velY = 0.5;  // Initial vertical drift
+    
+    function updatePosition() {
+        astronaut.style.left = posX + 'px';
+        astronaut.style.top = posY + 'px';
+    }
+    
+    // Handle keyboard input
+    document.addEventListener('keydown', function(e) {
+        const moveSpeed = 3;
+        switch(e.key.toLowerCase()) {
+            case 'w': velY = -moveSpeed; break;
+            case 's': velY = moveSpeed; break;
+            case 'a': velX = -moveSpeed; break;
+            case 'd': velX = moveSpeed; break;
+        }
+    });
+    
+    // Animation loop
+    function animate() {
+        posX += velX;
+        posY += velY;
+        
+        // Bounce off edges
+        if (posX <= 0 || posX >= window.innerWidth - 30) velX *= -1;
+        if (posY <= 0 || posY >= window.innerHeight - 30) velY *= -1;
+        
+        updatePosition();
+        requestAnimationFrame(animate);
+    }
+    
+    animate();
+
+
 });
