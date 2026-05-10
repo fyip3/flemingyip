@@ -96,6 +96,35 @@
       outline: none;
     }
 
+.name-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.spotify-embed {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  z-index: 10;
+  overflow: hidden;
+  border-radius: 50%;
+  opacity: 0.85;
+  cursor: pointer;
+  flex-shrink: 0;
+    transform: translateY(1px);
+
+}
+
+.spotify-embed iframe {
+  position: absolute;
+  top: -43px;
+  left: -263px;
+  width: 300px;
+  height: 80px;
+  border: none;
+  pointer-events: auto;
+}
     .timecode {
       position: fixed;
       z-index: 10;
@@ -164,20 +193,26 @@
   <div class="grain" aria-hidden="true"></div>
 
   <div class="timecode" aria-hidden="true">
-    <div><span class="rec"></span><span class="timecode-label">REC · SP</span></div>
+    <div><span class="rec"></span><span class="timecode-label">REC · 1984</span></div>
     <div id="timecode-readout">00:00:00:00</div>
   </div>
 
   <section class="credits" aria-label="Introduction">
-    <h1 class="name">Fleming Yip</h1>
-    <div class="role">founder · researcher · hephaes</div>
+    <div class="name-row">
+        <h1 class="name">Fleming Yip</h1>
+
+        <div class="spotify-embed">
+            <iframe id="spotify-player" src="https://open.spotify.com/embed/track/3FnP3j1TyiTwbJb5AR2ynT?utm_source=generator&theme=0" width="300" height="80" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+        </div>
+        </div>
+    <div class="role">founder · engineer · researcher</div>
     <nav class="links" aria-label="Links">
       <a href="mailto:flemingyip99@gmail.com">email</a>
       <a href="https://github.com/fyip3" target="_blank" rel="noreferrer">github</a>
       <a href="https://www.linkedin.com/in/flemingyip/" target="_blank" rel="noreferrer">linkedin</a>
-      <a href="https://twitter.com/" target="_blank" rel="noreferrer">twitter</a>
     </nav>
   </section>
+
 
   <script type="importmap">
     {
