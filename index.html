@@ -384,10 +384,10 @@
       // Highly varied lengths
       const lengthRoll = Math.random();
       let length;
-      if (lengthRoll < 0.35) length = 1 + Math.random() * 2; // Short dashes
-      else if (lengthRoll < 0.7) length = 3 + Math.random() * 6; // Medium
-      else if (lengthRoll < 0.9) length = 8 + Math.random() * 12; // Long
-      else length = 15 + Math.random() * 20; // Extra long bright streaks
+      if (lengthRoll < 0.18) length = 4 + Math.random() * 8; // Short dashes
+      else if (lengthRoll < 0.52) length = 12 + Math.random() * 18; // Medium
+      else if (lengthRoll < 0.84) length = 24 + Math.random() * 30; // Long
+      else length = 46 + Math.random() * 44; // Extra long bright streaks
 
       // Mostly vertical with slight wobble
       const angle = -Math.PI / 2 + (Math.random() - 0.5) * 0.06;
@@ -397,16 +397,17 @@
       const opacityRoll = Math.random() * Math.random(); // Skewed toward dim
       const opacity = 0.08 + opacityRoll * 0.7;
 
-      const width = 0.28 + Math.random() * 0.24 + opacity * 0.18 + Math.min(length / 35, 0.14);
-      const size = Math.max(9, length * 1.05 + width * 8);
+      const width = 0.28 + Math.random() * 0.78 + opacity * 0.22 + Math.min(length / 75, 0.16);
+      const size = Math.max(22, length * 2.0 + width * 7.5);
 
       return { x, y, length, width, size, angle, speed, opacity, active: true };
     }
 
     function getRainImpactDistance(drop) {
-      // Approximate the visible leading half of the droplet body so impacts
-      // happen near the waterline without cutting the drop off too early.
-      return Math.max(drop.length * 0.55, 1.8);
+      // Use rendered sprite size so elongated drops don't reset before the
+      // visible body reaches the splash zone.
+      const worldPerPixel = frustumSize / height;
+      return Math.max(drop.size * worldPerPixel * 0.62, 2.2);
     }
 
     for (let i = 0; i < RAIN_COUNT; i++) {
@@ -444,11 +445,13 @@
         varying float vWidth;
         varying float vAngle;
         varying float vOpacity;
+        varying float vSeed;
         void main() {
           vLength = dropLength;
           vWidth = dropWidth;
           vAngle = angle + 1.5707963;
           vOpacity = alpha;
+          vSeed = fract(sin(dot(position.xy, vec2(12.9898, 78.233)) + dropLength * 4.37 + dropWidth * 11.13) * 43758.5453);
           gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
           gl_PointSize = size;
         }
@@ -458,39 +461,53 @@
         varying float vWidth;
         varying float vAngle;
         varying float vOpacity;
+        varying float vSeed;
         void main() {
           vec2 uv = gl_PointCoord * 2.0 - 1.0;
           float c = cos(vAngle);
           float s = sin(vAngle);
           vec2 p = mat2(c, -s, s, c) * uv;
 
-          float widthScale = clamp(vWidth * 1.55, 0.38, 0.92);
-          float lengthScale = clamp(vLength / 12.0, 0.55, 2.3);
+          float widthScale = clamp(vWidth * 1.16, 0.22, 0.72);
+          float lengthScale = clamp(vLength / 28.0, 0.38, 1.06);
           vec2 q = vec2(p.x / widthScale, p.y * lengthScale);
 
-          float shaftWidth = mix(0.16, 0.34, smoothstep(-0.95, 0.35, q.y));
-          float shaft = 1.0 - smoothstep(shaftWidth, shaftWidth + 0.12, abs(q.x));
-          shaft *= smoothstep(-0.98, -0.38, q.y);
-          shaft *= 1.0 - smoothstep(0.45, 0.98, q.y);
+          float shaftWidth = mix(0.1, 0.17, smoothstep(-1.0, 0.62, q.y));
+          float shaft = 1.0 - smoothstep(shaftWidth, shaftWidth + 0.028, abs(q.x));
+          shaft *= smoothstep(-1.0, -0.9, q.y);
+          shaft *= 1.0 - smoothstep(0.94, 1.02, q.y);
 
-          float bulb = 1.0 - smoothstep(0.22, 0.54, length(vec2(q.x * 1.15, (q.y - 0.38) * 0.92)));
-          float tailMist = 1.0 - smoothstep(0.16, 0.58, length(vec2(q.x * 1.8, (q.y + 0.82) * 1.5)));
-          tailMist *= 0.18;
+          float bulb = 1.0 - smoothstep(0.08, 0.22, length(vec2(q.x * 1.12, (q.y - 0.52) * 0.74)));
+          float tailMist = 1.0 - smoothstep(0.04, 0.14, length(vec2(q.x * 2.15, (q.y + 1.0) * 2.35)));
+          tailMist *= 0.035;
 
           float silhouette = max(max(shaft, bulb), tailMist);
           if (silhouette < 0.01) discard;
 
-          float highlight = 1.0 - smoothstep(0.0, 0.26, length(vec2((q.x + 0.06) * 2.4, (q.y + 0.02) * 2.5)));
-          float headHighlight = 1.0 - smoothstep(0.0, 0.18, length(vec2((q.x + 0.02) * 2.8, (q.y - 0.32) * 2.3)));
-          float fresnel = smoothstep(0.55, 0.06, abs(q.x)) * smoothstep(-0.72, 0.42, q.y);
+          // Keep rim thickness in sprite space so wider drops don't get thicker outlines.
+          float edgeGlow = smoothstep(0.075 + vSeed * 0.008, 0.014, abs(p.x)) * smoothstep(-0.96, 0.78, q.y);
+          float centerHollow = 1.0 - smoothstep(0.01, 0.03 + vSeed * 0.01, abs(p.x));
+          centerHollow *= smoothstep(-0.88, 0.54, q.y) * (1.0 - smoothstep(0.56, 0.995, q.y));
 
-          vec3 baseColor = vec3(0.18, 0.19, 0.28);
-          vec3 bodyColor = vec3(0.50, 0.52, 0.70);
-          vec3 specColor = vec3(0.86, 0.87, 0.96);
-          vec3 color = mix(baseColor, bodyColor, silhouette * 0.85 + fresnel * 0.3);
-          color = mix(color, specColor, highlight * 0.55 + headHighlight * 0.8);
+          float highlight = 1.0 - smoothstep(0.0, 0.075, length(vec2((q.x + 0.012) * 5.0, (q.y + 0.08) * 3.7)));
+          float headHighlight = 1.0 - smoothstep(0.0, 0.055, length(vec2((q.x + 0.003) * 5.3, (q.y - 0.46) * 3.7)));
+          float rim = clamp(edgeGlow - centerHollow * (0.74 + vSeed * 0.08), 0.0, 1.0);
+          float fresnel = smoothstep(0.22, 0.02, abs(q.x)) * smoothstep(-0.84, 0.72, q.y);
 
-          float alpha = silhouette * vOpacity * 0.72 + highlight * vOpacity * 0.14 + headHighlight * vOpacity * 0.18;
+          vec3 baseColor = vec3(0.16, 0.14, 0.20);
+          vec3 bodyColor = vec3(0.54, 0.46, 0.58);
+          vec3 rimColor = vec3(0.94, 0.90, 0.92);
+          vec3 specColor = vec3(1.0, 0.97, 0.98);
+          vec3 color = mix(baseColor, bodyColor, silhouette * 0.24 + fresnel * 0.08);
+          color = mix(color, rimColor, rim * (0.9 + vSeed * 0.05));
+          color = mix(color, specColor, highlight * 0.14 + headHighlight * 0.34);
+
+          float alpha = silhouette * vOpacity * 0.18;
+          alpha += rim * vOpacity * 0.26;
+          alpha += highlight * vOpacity * 0.018;
+          alpha += headHighlight * vOpacity * 0.04;
+          alpha -= centerHollow * vOpacity * (0.08 + vSeed * 0.02);
+          alpha = max(alpha, 0.0);
           gl_FragColor = vec4(color, alpha);
         }
       `
@@ -609,7 +626,7 @@
 
         splashLifetimes[idx] = 0.3 + Math.random() * 0.5;
         splashSizes[idx] = 0.2 + Math.random() * 0.7;
-        splashAlphas[idx] = 0.12 + Math.random() * 0.16;
+        splashAlphas[idx] = 0.14 + Math.random() * 0.18;
       }
     }
 
@@ -667,23 +684,23 @@
     let backsplashIndex = 0;
 
     function spawnBacksplash(impactX, impactY, intensity) {
-      const numDroplets = Math.floor(2 + intensity * 4 + Math.random() * 3);
+      const numDroplets = Math.floor(4 + intensity * 7 + Math.random() * 5);
 
       for (let j = 0; j < numDroplets; j++) {
         const idx = backsplashIndex;
         backsplashIndex = (backsplashIndex + 1) % BACKSPLASH_POOL_SIZE;
 
         const side = Math.random() < 0.5 ? -1 : 1;
-        backsplashPositions[idx * 3] = impactX + (Math.random() - 0.5) * 1.6;
-        backsplashPositions[idx * 3 + 1] = impactY + Math.random() * 0.6;
+        backsplashPositions[idx * 3] = impactX + (Math.random() - 0.5) * 1.2;
+        backsplashPositions[idx * 3 + 1] = impactY + Math.random() * 0.45;
         backsplashPositions[idx * 3 + 2] = 0;
 
-        backsplashVelocities[idx * 2] = side * (0.06 + Math.random() * 0.16 + intensity * 0.1);
-        backsplashVelocities[idx * 2 + 1] = 0.12 + Math.random() * 0.16 + intensity * 0.14;
+        backsplashVelocities[idx * 2] = side * (0.08 + Math.random() * 0.2 + intensity * 0.16);
+        backsplashVelocities[idx * 2 + 1] = 0.16 + Math.random() * 0.22 + intensity * 0.2;
 
-        backsplashLifetimes[idx] = 0.2 + Math.random() * 0.18;
-        backsplashSizes[idx] = 0.45 + Math.random() * 0.9 + intensity * 0.35;
-        backsplashAlphas[idx] = 0.08 + Math.random() * 0.1 + intensity * 0.1;
+        backsplashLifetimes[idx] = 0.24 + Math.random() * 0.2;
+        backsplashSizes[idx] = 1.8 + Math.random() * 2.6 + intensity * 1.8;
+        backsplashAlphas[idx] = 0.22 + Math.random() * 0.18 + intensity * 0.18;
       }
     }
 
@@ -698,19 +715,20 @@
         void main() {
           vAlpha = alpha;
           gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-          gl_PointSize = size * 3.6;
+          gl_PointSize = size * 2.1;
         }
       `,
       fragmentShader: `
         varying float vAlpha;
         void main() {
           vec2 uv = gl_PointCoord - 0.5;
-          uv.y += 0.08;
-          float d = length(vec2(uv.x * 0.9, uv.y * 1.15));
-          float glow = smoothstep(0.52, 0.14, d);
-          float alpha = glow * vAlpha;
+          float d = length(vec2(uv.x * 0.95, uv.y * 1.1));
+          float pellet = 1.0 - smoothstep(0.16, 0.33, d);
+          float highlight = 1.0 - smoothstep(0.0, 0.11, length(vec2((uv.x + 0.08) * 2.7, (uv.y + 0.06) * 2.7)));
+          float alpha = pellet * vAlpha + highlight * vAlpha * 0.08;
           if (alpha < 0.01) discard;
-          gl_FragColor = vec4(vec3(0.62, 0.55, 0.72), alpha);
+          vec3 color = mix(vec3(0.62, 0.57, 0.74), vec3(0.80, 0.78, 0.90), highlight * 0.35);
+          gl_FragColor = vec4(color, alpha);
         }
       `
     });
@@ -990,13 +1008,15 @@
 
         // Check if rain hit the ground
         if (bottomY <= GROUND_Y) {
-          // SPAWN SPLASH at impact point!
+          // Only some impacts throw visible splash effects
           const impactX = data.x + Math.cos(data.angle) * impactDistance;
           const intensity = data.opacity;
 
-          spawnRipple(impactX, GROUND_Y, intensity);
-          spawnSplash(impactX, GROUND_Y, intensity);
-          spawnBacksplash(impactX, GROUND_Y, intensity);
+          if (Math.random() < 0.5) {
+            spawnRipple(impactX, GROUND_Y, intensity);
+            spawnSplash(impactX, GROUND_Y, intensity);
+            spawnBacksplash(impactX, GROUND_Y, intensity);
+          }
 
           // Reset rain drop at top
           const newData = initRainDrop(i);
