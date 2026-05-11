@@ -202,7 +202,7 @@
         <h1 class="name">Fleming Yip</h1>
 
         <div class="spotify-embed">
-            <iframe id="spotify-player" src="https://open.spotify.com/embed/track/3FnP3j1TyiTwbJb5AR2ynT?utm_source=generator&theme=0" width="300" height="80" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+            <iframe id="spotify-player" src="https://open.spotify.com/embed/track/6P8EQDBxrHmBWJgnN9lL8g?" width="300" height="80" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
         </div>
         </div>
     <div class="role">founder · engineer · researcher</div>
@@ -227,8 +227,17 @@
     // Timecode
     const timecode = document.getElementById("timecode-readout");
     const startedAt = Date.now();
+    let isPaused = false;
+    let pausedAtMs = 0;
+    let totalPausedMs = 0;
+
+    function getElapsedMs() {
+      const now = isPaused ? pausedAtMs : Date.now();
+      return now - startedAt - totalPausedMs;
+    }
+
     function updateTimecode() {
-      const elapsed = Date.now() - startedAt;
+      const elapsed = getElapsedMs();
       const totalSeconds = Math.floor(elapsed / 1000);
       const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
       const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
@@ -238,6 +247,22 @@
     }
     setInterval(updateTimecode, 33);
     updateTimecode();
+
+    window.addEventListener("keydown", (event) => {
+      if (event.code !== "Space") return;
+
+      event.preventDefault();
+
+      if (isPaused) {
+        totalPausedMs += Date.now() - pausedAtMs;
+        isPaused = false;
+      } else {
+        pausedAtMs = Date.now();
+        isPaused = true;
+      }
+
+      updateTimecode();
+    });
 
     // ═══════════════════════════════════════════════════════════════════
     // PURPLE RAIN - Soft, analog, 1984 concert film aesthetic
@@ -265,8 +290,10 @@
     const scene = new THREE.Scene();
 
     // Ground at bottom, splash zone occupies bottom 20% of screen
-    const RAIN_COUNT = 1800;
-    const SPLASH_POOL_SIZE = 6000;
+    const RAIN_COUNT = 5600;
+    const SPLASH_POOL_SIZE = 15000;
+    const BACKSPLASH_POOL_SIZE = 6000;
+    const RIPPLE_POOL_SIZE = 2200;
     const MIST_COUNT = 2000; // Chaotic mist/foam in splash zone
     const GROUND_Y = -frustumSize / 2 + 3;
     const SPLASH_ZONE_TOP = GROUND_Y + 18; // Thick splash zone
@@ -332,18 +359,22 @@
     // LAYER 2: Soft, clumpy rain with varied opacity
     // ═══════════════════════════════════════════════════════════════════
     const rainGeometry = new THREE.BufferGeometry();
-    const rainPositions = new Float32Array(RAIN_COUNT * 6);
-    const rainAlphas = new Float32Array(RAIN_COUNT * 2);
+    const rainPositions = new Float32Array(RAIN_COUNT * 3);
+    const rainSizes = new Float32Array(RAIN_COUNT);
+    const rainLengths = new Float32Array(RAIN_COUNT);
+    const rainWidths = new Float32Array(RAIN_COUNT);
+    const rainOpacities = new Float32Array(RAIN_COUNT);
+    const rainAngles = new Float32Array(RAIN_COUNT);
     const rainData = [];
 
     function initRainDrop(i, startY = null) {
       // Clumpy distribution using noise
       let x;
-      const clumpiness = 0.6;
+      const clumpiness = 0.35;
       if (Math.random() < clumpiness) {
-        // Clump around certain areas
-        const clumpCenter = (Math.floor(Math.random() * 8) - 4) * 15;
-        x = clumpCenter + (Math.random() - 0.5) * 25;
+        // Light banding, but keep coverage across the whole screen
+        const clumpCenter = (Math.random() - 0.5) * frustumSize * aspect * 1.9;
+        x = clumpCenter + (Math.random() - 0.5) * 18;
       } else {
         x = (Math.random() - 0.5) * frustumSize * aspect * 2.2;
       }
@@ -360,62 +391,186 @@
 
       // Mostly vertical with slight wobble
       const angle = -Math.PI / 2 + (Math.random() - 0.5) * 0.06;
-      const speed = 1.2 + Math.random() * 2.0;
+      const speed = 1.8 + Math.random() * 0.8;
 
       // Highly varied opacity - many dim, few bright
       const opacityRoll = Math.random() * Math.random(); // Skewed toward dim
       const opacity = 0.08 + opacityRoll * 0.7;
 
-      return { x, y, length, angle, speed, opacity, active: true };
+      const width = 0.28 + Math.random() * 0.24 + opacity * 0.18 + Math.min(length / 35, 0.14);
+      const size = Math.max(9, length * 1.05 + width * 8);
+
+      return { x, y, length, width, size, angle, speed, opacity, active: true };
+    }
+
+    function getRainImpactDistance(drop) {
+      // Approximate the visible leading half of the droplet body so impacts
+      // happen near the waterline without cutting the drop off too early.
+      return Math.max(drop.length * 0.55, 1.8);
     }
 
     for (let i = 0; i < RAIN_COUNT; i++) {
       const data = initRainDrop(i, Math.random() * frustumSize * 1.8 - frustumSize * 0.4);
       rainData.push(data);
 
-      rainPositions[i * 6] = data.x;
-      rainPositions[i * 6 + 1] = data.y;
-      rainPositions[i * 6 + 2] = 0;
-      rainPositions[i * 6 + 3] = data.x + Math.cos(data.angle) * data.length;
-      rainPositions[i * 6 + 4] = data.y + Math.sin(data.angle) * data.length;
-      rainPositions[i * 6 + 5] = 0;
-
-      // Head brighter, tail fades
-      rainAlphas[i * 2] = data.opacity;
-      rainAlphas[i * 2 + 1] = data.opacity * 0.05;
+      rainPositions[i * 3] = data.x;
+      rainPositions[i * 3 + 1] = data.y;
+      rainPositions[i * 3 + 2] = 0;
+      rainSizes[i] = data.size;
+      rainLengths[i] = data.length;
+      rainWidths[i] = data.width;
+      rainOpacities[i] = data.opacity;
+      rainAngles[i] = data.angle;
     }
 
     rainGeometry.setAttribute("position", new THREE.BufferAttribute(rainPositions, 3));
-    rainGeometry.setAttribute("alpha", new THREE.BufferAttribute(rainAlphas, 1));
+    rainGeometry.setAttribute("size", new THREE.BufferAttribute(rainSizes, 1));
+    rainGeometry.setAttribute("dropLength", new THREE.BufferAttribute(rainLengths, 1));
+    rainGeometry.setAttribute("dropWidth", new THREE.BufferAttribute(rainWidths, 1));
+    rainGeometry.setAttribute("alpha", new THREE.BufferAttribute(rainOpacities, 1));
+    rainGeometry.setAttribute("angle", new THREE.BufferAttribute(rainAngles, 1));
 
     const rainMaterial = new THREE.ShaderMaterial({
       transparent: true,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
       vertexShader: `
+        attribute float size;
+        attribute float dropLength;
+        attribute float dropWidth;
+        attribute float alpha;
+        attribute float angle;
+        varying float vLength;
+        varying float vWidth;
+        varying float vAngle;
+        varying float vOpacity;
+        void main() {
+          vLength = dropLength;
+          vWidth = dropWidth;
+          vAngle = angle + 1.5707963;
+          vOpacity = alpha;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          gl_PointSize = size;
+        }
+      `,
+      fragmentShader: `
+        varying float vLength;
+        varying float vWidth;
+        varying float vAngle;
+        varying float vOpacity;
+        void main() {
+          vec2 uv = gl_PointCoord * 2.0 - 1.0;
+          float c = cos(vAngle);
+          float s = sin(vAngle);
+          vec2 p = mat2(c, -s, s, c) * uv;
+
+          float widthScale = clamp(vWidth * 1.55, 0.38, 0.92);
+          float lengthScale = clamp(vLength / 12.0, 0.55, 2.3);
+          vec2 q = vec2(p.x / widthScale, p.y * lengthScale);
+
+          float shaftWidth = mix(0.16, 0.34, smoothstep(-0.95, 0.35, q.y));
+          float shaft = 1.0 - smoothstep(shaftWidth, shaftWidth + 0.12, abs(q.x));
+          shaft *= smoothstep(-0.98, -0.38, q.y);
+          shaft *= 1.0 - smoothstep(0.45, 0.98, q.y);
+
+          float bulb = 1.0 - smoothstep(0.22, 0.54, length(vec2(q.x * 1.15, (q.y - 0.38) * 0.92)));
+          float tailMist = 1.0 - smoothstep(0.16, 0.58, length(vec2(q.x * 1.8, (q.y + 0.82) * 1.5)));
+          tailMist *= 0.18;
+
+          float silhouette = max(max(shaft, bulb), tailMist);
+          if (silhouette < 0.01) discard;
+
+          float highlight = 1.0 - smoothstep(0.0, 0.26, length(vec2((q.x + 0.06) * 2.4, (q.y + 0.02) * 2.5)));
+          float headHighlight = 1.0 - smoothstep(0.0, 0.18, length(vec2((q.x + 0.02) * 2.8, (q.y - 0.32) * 2.3)));
+          float fresnel = smoothstep(0.55, 0.06, abs(q.x)) * smoothstep(-0.72, 0.42, q.y);
+
+          vec3 baseColor = vec3(0.18, 0.19, 0.28);
+          vec3 bodyColor = vec3(0.50, 0.52, 0.70);
+          vec3 specColor = vec3(0.86, 0.87, 0.96);
+          vec3 color = mix(baseColor, bodyColor, silhouette * 0.85 + fresnel * 0.3);
+          color = mix(color, specColor, highlight * 0.55 + headHighlight * 0.8);
+
+          float alpha = silhouette * vOpacity * 0.72 + highlight * vOpacity * 0.14 + headHighlight * vOpacity * 0.18;
+          gl_FragColor = vec4(color, alpha);
+        }
+      `
+    });
+
+    const rainDrops = new THREE.Points(rainGeometry, rainMaterial);
+    rainDrops.position.z = 5;
+    rainDrops.frustumCulled = false;
+    scene.add(rainDrops);
+
+    // ═══════════════════════════════════════════════════════════════════
+    // LAYER 3: Ripple rings - soft horizontal echoes on impact
+    // ═══════════════════════════════════════════════════════════════════
+    const rippleGeometry = new THREE.BufferGeometry();
+    const ripplePositions = new Float32Array(RIPPLE_POOL_SIZE * 3);
+    const rippleSizes = new Float32Array(RIPPLE_POOL_SIZE);
+    const rippleAlphas = new Float32Array(RIPPLE_POOL_SIZE);
+    const rippleLifetimes = new Float32Array(RIPPLE_POOL_SIZE);
+    const rippleGrowth = new Float32Array(RIPPLE_POOL_SIZE);
+
+    for (let i = 0; i < RIPPLE_POOL_SIZE; i++) {
+      ripplePositions[i * 3 + 1] = -1000;
+    }
+
+    rippleGeometry.setAttribute("position", new THREE.BufferAttribute(ripplePositions, 3));
+    rippleGeometry.setAttribute("size", new THREE.BufferAttribute(rippleSizes, 1));
+    rippleGeometry.setAttribute("alpha", new THREE.BufferAttribute(rippleAlphas, 1));
+
+    let rippleIndex = 0;
+
+    function spawnRipple(impactX, impactY, intensity) {
+      const idx = rippleIndex;
+      rippleIndex = (rippleIndex + 1) % RIPPLE_POOL_SIZE;
+
+      ripplePositions[idx * 3] = impactX + (Math.random() - 0.5) * 1.1;
+      ripplePositions[idx * 3 + 1] = impactY - 0.18 + Math.random() * 0.08;
+      ripplePositions[idx * 3 + 2] = 0;
+
+      rippleSizes[idx] = 6 + intensity * 7 + Math.random() * 5;
+      rippleAlphas[idx] = 0.08 + intensity * 0.14;
+      rippleLifetimes[idx] = 0.28 + Math.random() * 0.22;
+      rippleGrowth[idx] = 1.8 + intensity * 1.4 + Math.random() * 0.8;
+    }
+
+    const rippleMaterial = new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      vertexShader: `
+        attribute float size;
         attribute float alpha;
         varying float vAlpha;
         void main() {
           vAlpha = alpha;
           gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          gl_PointSize = size;
         }
       `,
       fragmentShader: `
         varying float vAlpha;
         void main() {
-          // Soft lavender/cream color, not neon
-          vec3 color = vec3(0.85, 0.80, 0.88);
-          gl_FragColor = vec4(color, vAlpha);
+          vec2 uv = gl_PointCoord - 0.5;
+          uv.y *= 0.45;
+          float d = length(uv);
+          float outer = 1.0 - smoothstep(0.34, 0.52, d);
+          float inner = 1.0 - smoothstep(0.18, 0.31, d);
+          float ring = clamp(outer - inner, 0.0, 1.0);
+          float alpha = ring * vAlpha;
+          if (alpha < 0.01) discard;
+          gl_FragColor = vec4(vec3(0.40, 0.34, 0.52), alpha);
         }
       `
     });
 
-    const rainLines = new THREE.LineSegments(rainGeometry, rainMaterial);
-    rainLines.position.z = 5;
-    scene.add(rainLines);
+    const ripplePoints = new THREE.Points(rippleGeometry, rippleMaterial);
+    ripplePoints.position.z = 4;
+    scene.add(ripplePoints);
 
     // ═══════════════════════════════════════════════════════════════════
-    // LAYER 3: Splash droplets - spawn at impact, arc up and fall
+    // LAYER 4: Splash droplets - spawn at impact, arc up and fall
     // ═══════════════════════════════════════════════════════════════════
     const splashGeometry = new THREE.BufferGeometry();
     const splashPositions = new Float32Array(SPLASH_POOL_SIZE * 3);
@@ -437,7 +592,7 @@
     let splashIndex = 0;
 
     function spawnSplash(impactX, impactY, intensity) {
-      const numDroplets = Math.floor(4 + Math.random() * 8 * intensity);
+      const numDroplets = Math.floor(3 + Math.random() * 5 * intensity);
 
       for (let j = 0; j < numDroplets; j++) {
         const idx = splashIndex;
@@ -453,8 +608,8 @@
         splashVelocities[idx * 2 + 1] = Math.abs(Math.cos(spreadAngle)) * upSpeed;
 
         splashLifetimes[idx] = 0.3 + Math.random() * 0.5;
-        splashSizes[idx] = 0.3 + Math.random() * 1.0;
-        splashAlphas[idx] = 0.3 + Math.random() * 0.4;
+        splashSizes[idx] = 0.2 + Math.random() * 0.7;
+        splashAlphas[idx] = 0.12 + Math.random() * 0.16;
       }
     }
 
@@ -469,7 +624,7 @@
         void main() {
           vAlpha = alpha;
           gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-          gl_PointSize = size * 4.0;
+          gl_PointSize = size * 3.0;
         }
       `,
       fragmentShader: `
@@ -479,7 +634,7 @@
           float d = length(uv);
           // Soft, blurry circle
           float glow = smoothstep(0.5, 0.15, d);
-          vec3 color = vec3(0.88, 0.84, 0.92);
+          vec3 color = vec3(0.64, 0.58, 0.74);
           float alpha = glow * vAlpha;
           if (alpha < 0.01) discard;
           gl_FragColor = vec4(color, alpha);
@@ -492,7 +647,80 @@
     scene.add(splashPoints);
 
     // ═══════════════════════════════════════════════════════════════════
-    // LAYER 4: Chaotic mist/foam layer in splash zone (bottom 15-20%)
+    // LAYER 5: Backsplash crown - heavier droplets kicked upward on impact
+    // ═══════════════════════════════════════════════════════════════════
+    const backsplashGeometry = new THREE.BufferGeometry();
+    const backsplashPositions = new Float32Array(BACKSPLASH_POOL_SIZE * 3);
+    const backsplashVelocities = new Float32Array(BACKSPLASH_POOL_SIZE * 2);
+    const backsplashLifetimes = new Float32Array(BACKSPLASH_POOL_SIZE);
+    const backsplashSizes = new Float32Array(BACKSPLASH_POOL_SIZE);
+    const backsplashAlphas = new Float32Array(BACKSPLASH_POOL_SIZE);
+
+    for (let i = 0; i < BACKSPLASH_POOL_SIZE; i++) {
+      backsplashPositions[i * 3 + 1] = -1000;
+    }
+
+    backsplashGeometry.setAttribute("position", new THREE.BufferAttribute(backsplashPositions, 3));
+    backsplashGeometry.setAttribute("size", new THREE.BufferAttribute(backsplashSizes, 1));
+    backsplashGeometry.setAttribute("alpha", new THREE.BufferAttribute(backsplashAlphas, 1));
+
+    let backsplashIndex = 0;
+
+    function spawnBacksplash(impactX, impactY, intensity) {
+      const numDroplets = Math.floor(2 + intensity * 4 + Math.random() * 3);
+
+      for (let j = 0; j < numDroplets; j++) {
+        const idx = backsplashIndex;
+        backsplashIndex = (backsplashIndex + 1) % BACKSPLASH_POOL_SIZE;
+
+        const side = Math.random() < 0.5 ? -1 : 1;
+        backsplashPositions[idx * 3] = impactX + (Math.random() - 0.5) * 1.6;
+        backsplashPositions[idx * 3 + 1] = impactY + Math.random() * 0.6;
+        backsplashPositions[idx * 3 + 2] = 0;
+
+        backsplashVelocities[idx * 2] = side * (0.06 + Math.random() * 0.16 + intensity * 0.1);
+        backsplashVelocities[idx * 2 + 1] = 0.12 + Math.random() * 0.16 + intensity * 0.14;
+
+        backsplashLifetimes[idx] = 0.2 + Math.random() * 0.18;
+        backsplashSizes[idx] = 0.45 + Math.random() * 0.9 + intensity * 0.35;
+        backsplashAlphas[idx] = 0.08 + Math.random() * 0.1 + intensity * 0.1;
+      }
+    }
+
+    const backsplashMaterial = new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      vertexShader: `
+        attribute float size;
+        attribute float alpha;
+        varying float vAlpha;
+        void main() {
+          vAlpha = alpha;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          gl_PointSize = size * 3.6;
+        }
+      `,
+      fragmentShader: `
+        varying float vAlpha;
+        void main() {
+          vec2 uv = gl_PointCoord - 0.5;
+          uv.y += 0.08;
+          float d = length(vec2(uv.x * 0.9, uv.y * 1.15));
+          float glow = smoothstep(0.52, 0.14, d);
+          float alpha = glow * vAlpha;
+          if (alpha < 0.01) discard;
+          gl_FragColor = vec4(vec3(0.62, 0.55, 0.72), alpha);
+        }
+      `
+    });
+
+    const backsplashPoints = new THREE.Points(backsplashGeometry, backsplashMaterial);
+    backsplashPoints.position.z = 9;
+    scene.add(backsplashPoints);
+
+    // ═══════════════════════════════════════════════════════════════════
+    // LAYER 6: Chaotic mist/foam layer in splash zone (bottom 15-20%)
     // Overlapping soft particles creating cloud-like texture
     // ═══════════════════════════════════════════════════════════════════
     const mistGeometry = new THREE.BufferGeometry();
@@ -509,7 +737,7 @@
       mistPositions[i * 3 + 2] = 0;
 
       mistSizes[i] = 0.5 + Math.random() * 2.5;
-      mistAlphas[i] = 0.05 + Math.random() * 0.2;
+      mistAlphas[i] = 0.025 + Math.random() * 0.08;
       mistPhases[i] = Math.random() * Math.PI * 2;
     }
 
@@ -545,7 +773,7 @@
           // Very soft, cloud-like
           float glow = smoothstep(0.5, 0.0, d);
           glow = glow * glow; // Extra soft falloff
-          vec3 color = vec3(0.75, 0.70, 0.82);
+          vec3 color = vec3(0.46, 0.40, 0.56);
           float alpha = glow * vAlpha;
           if (alpha < 0.005) discard;
           gl_FragColor = vec4(color, alpha);
@@ -558,9 +786,9 @@
     scene.add(mistPoints);
 
     // ═══════════════════════════════════════════════════════════════════
-    // LAYER 5: Glittering highlights scattered in splash zone
+    // LAYER 7: Glittering highlights scattered in splash zone
     // ═══════════════════════════════════════════════════════════════════
-    const GLITTER_COUNT = 800;
+    const GLITTER_COUNT = 420;
     const glitterGeometry = new THREE.BufferGeometry();
     const glitterPositions = new Float32Array(GLITTER_COUNT * 3);
     const glitterSizes = new Float32Array(GLITTER_COUNT);
@@ -571,9 +799,9 @@
       glitterPositions[i * 3] = (Math.random() - 0.5) * frustumSize * aspect * 2;
       glitterPositions[i * 3 + 1] = GROUND_Y + Math.random() * 15;
       glitterPositions[i * 3 + 2] = 0;
-      glitterSizes[i] = 0.15 + Math.random() * 0.4;
+      glitterSizes[i] = 0.12 + Math.random() * 0.22;
       glitterPhases[i] = Math.random() * Math.PI * 2;
-      glitterAlphas[i] = 0.2 + Math.random() * 0.5;
+      glitterAlphas[i] = 0.06 + Math.random() * 0.16;
     }
 
     glitterGeometry.setAttribute("position", new THREE.BufferAttribute(glitterPositions, 3));
@@ -597,7 +825,7 @@
           float twinkle = pow(max(0.0, sin(uTime * 8.0 + phase)), 6.0);
           vAlpha = alpha * twinkle;
           gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-          gl_PointSize = size * (1.0 + twinkle * 3.0) * 2.0;
+          gl_PointSize = size * (1.0 + twinkle * 2.0) * 1.5;
         }
       `,
       fragmentShader: `
@@ -607,8 +835,8 @@
           float d = length(uv);
           float glow = smoothstep(0.5, 0.0, d);
           float core = smoothstep(0.15, 0.0, d);
-          vec3 color = vec3(0.95, 0.92, 1.0);
-          float alpha = (glow * 0.5 + core * 0.8) * vAlpha;
+          vec3 color = vec3(0.70, 0.64, 0.82);
+          float alpha = (glow * 0.35 + core * 0.5) * vAlpha;
           if (alpha < 0.01) discard;
           gl_FragColor = vec4(color, alpha);
         }
@@ -685,11 +913,11 @@
               vec2 offset = vec2(float(x), float(y)) * texel * 2.0;
               vec3 s = texture2D(tDiffuse, uv + offset).rgb;
               float b = dot(s, vec3(0.299, 0.587, 0.114));
-              bloomBlur += s * smoothstep(0.2, 0.6, b);
+              bloomBlur += s * smoothstep(0.35, 0.78, b);
             }
           }
           bloomBlur /= 25.0;
-          color += bloomBlur * 0.5;
+          color += bloomBlur * 0.22;
 
           // Film grain
           float grainTime = floor(uTime * 24.0) / 24.0;
@@ -727,43 +955,99 @@
     function animate() {
       requestAnimationFrame(animate);
 
-      const time = performance.now() * 0.001;
+      const time = getElapsedMs() * 0.001;
+
+      if (isPaused) {
+        mistMaterial.uniforms.uTime.value = time;
+        glitterMaterial.uniforms.uTime.value = time;
+        postMaterial.uniforms.uTime.value = time;
+
+        renderer.setRenderTarget(renderTarget);
+        renderer.clear();
+        renderer.render(scene, camera);
+
+        renderer.setRenderTarget(null);
+        renderer.clear();
+        renderer.render(postScene, postCamera);
+        return;
+      }
 
       // Update rain - move down and detect impact
       const rainPos = rainGeometry.attributes.position.array;
-      const rainAlpha = rainGeometry.attributes.alpha.array;
+      const rainSize = rainGeometry.attributes.size.array;
+      const rainLength = rainGeometry.attributes.dropLength.array;
+      const rainWidth = rainGeometry.attributes.dropWidth.array;
+      const rainOpacity = rainGeometry.attributes.alpha.array;
+      const rainAngle = rainGeometry.attributes.angle.array;
 
       for (let i = 0; i < RAIN_COUNT; i++) {
         const data = rainData[i];
         data.y -= data.speed;
 
-        // Get bottom of rain drop
-        const bottomY = data.y + Math.sin(data.angle) * data.length;
+        // Use the visible point-sprite tip, not the old line length, for ground impact
+        const impactDistance = getRainImpactDistance(data);
+        const bottomY = data.y + Math.sin(data.angle) * impactDistance;
 
         // Check if rain hit the ground
         if (bottomY <= GROUND_Y) {
           // SPAWN SPLASH at impact point!
-          const impactX = data.x + Math.cos(data.angle) * data.length;
+          const impactX = data.x + Math.cos(data.angle) * impactDistance;
           const intensity = data.opacity;
 
+          spawnRipple(impactX, GROUND_Y, intensity);
           spawnSplash(impactX, GROUND_Y, intensity);
+          spawnBacksplash(impactX, GROUND_Y, intensity);
 
           // Reset rain drop at top
           const newData = initRainDrop(i);
           Object.assign(data, newData);
 
-          rainAlpha[i * 2] = data.opacity;
-          rainAlpha[i * 2 + 1] = data.opacity * 0.05;
+          rainSize[i] = data.size;
+          rainLength[i] = data.length;
+          rainWidth[i] = data.width;
+          rainOpacity[i] = data.opacity;
+          rainAngle[i] = data.angle;
         }
 
-        // Update vertex positions
-        rainPos[i * 6] = data.x;
-        rainPos[i * 6 + 1] = data.y;
-        rainPos[i * 6 + 3] = data.x + Math.cos(data.angle) * data.length;
-        rainPos[i * 6 + 4] = data.y + Math.sin(data.angle) * data.length;
+        // Update droplet position and appearance
+        rainPos[i * 3] = data.x;
+        rainPos[i * 3 + 1] = data.y;
+        rainPos[i * 3 + 2] = 0;
+        rainSize[i] = data.size;
+        rainLength[i] = data.length;
+        rainWidth[i] = data.width;
+        rainOpacity[i] = data.opacity;
+        rainAngle[i] = data.angle;
       }
       rainGeometry.attributes.position.needsUpdate = true;
+      rainGeometry.attributes.size.needsUpdate = true;
+      rainGeometry.attributes.dropLength.needsUpdate = true;
+      rainGeometry.attributes.dropWidth.needsUpdate = true;
       rainGeometry.attributes.alpha.needsUpdate = true;
+      rainGeometry.attributes.angle.needsUpdate = true;
+
+      // Update ripple rings - expand, soften, and disappear into the waterline
+      const ripplePos = rippleGeometry.attributes.position.array;
+      const rippleAlpha = rippleGeometry.attributes.alpha.array;
+      const rippleSize = rippleGeometry.attributes.size.array;
+
+      for (let i = 0; i < RIPPLE_POOL_SIZE; i++) {
+        if (rippleLifetimes[i] > 0) {
+          rippleLifetimes[i] -= 0.016;
+          rippleSize[i] += rippleGrowth[i];
+          rippleAlpha[i] *= 0.93;
+
+          if (rippleLifetimes[i] <= 0 || rippleAlpha[i] < 0.01) {
+            rippleLifetimes[i] = 0;
+            ripplePos[i * 3 + 1] = -1000;
+            rippleAlpha[i] = 0;
+            rippleSize[i] = 0;
+          }
+        }
+      }
+      rippleGeometry.attributes.position.needsUpdate = true;
+      rippleGeometry.attributes.alpha.needsUpdate = true;
+      rippleGeometry.attributes.size.needsUpdate = true;
 
       // Update splash particles - physics simulation
       const splashPos = splashGeometry.attributes.position.array;
@@ -794,6 +1078,32 @@
       splashGeometry.attributes.position.needsUpdate = true;
       splashGeometry.attributes.alpha.needsUpdate = true;
       splashGeometry.attributes.size.needsUpdate = true;
+
+      // Update backsplash particles - punchier crown that falls back quickly
+      const backsplashPos = backsplashGeometry.attributes.position.array;
+      const backsplashAlpha = backsplashGeometry.attributes.alpha.array;
+
+      for (let i = 0; i < BACKSPLASH_POOL_SIZE; i++) {
+        if (backsplashLifetimes[i] > 0) {
+          backsplashLifetimes[i] -= 0.016;
+
+          backsplashPos[i * 3] += backsplashVelocities[i * 2];
+          backsplashPos[i * 3 + 1] += backsplashVelocities[i * 2 + 1];
+
+          backsplashVelocities[i * 2] *= 0.985;
+          backsplashVelocities[i * 2 + 1] -= 0.01;
+          backsplashAlpha[i] *= 0.94;
+
+          if (backsplashPos[i * 3 + 1] < GROUND_Y - 0.8 || backsplashLifetimes[i] <= 0) {
+            backsplashLifetimes[i] = 0;
+            backsplashPos[i * 3 + 1] = -1000;
+            backsplashAlpha[i] = 0;
+          }
+        }
+      }
+      backsplashGeometry.attributes.position.needsUpdate = true;
+      backsplashGeometry.attributes.alpha.needsUpdate = true;
+      backsplashGeometry.attributes.size.needsUpdate = true;
 
       // Update mist - slow drift and occasional repositioning
       const mistPos = mistGeometry.attributes.position.array;
